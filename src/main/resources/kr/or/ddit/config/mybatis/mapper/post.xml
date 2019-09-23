@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="post">
+	
+	<select id="allPostList" parameterType="int" resultType="postVo">
+		select * from post where boardNum = #{boardNum}
+	</select>
+
+	<select id="getPostList" parameterType="map" resultType="postVo">
+       select  *
+       from   (select rownum rn, a.*
+               from  (select postNum, postNm, postCont, postdate, delStatus, userId, boardNum, postNum2, gn, level
+                       from post
+                      start with postNum2 is null
+                    connect by prior postNum = postNum2
+                      order siblings by gn desc, postNum)a
+                where boardNum = #{boardNum})a
+        where a.rn between (#{pagesize} * (#{page} - 1)) + 1 and (#{pagesize} * #{page})
+	</select>
+	
+	<select id="selectPost" parameterType="int" resultType="postVo">
+		select * from post where postNum = #{data}
+	</select>
+	
+	<select id="getPostSeq" resultType="int">
+		select post_seq.nextval from dual
+	</select>
+	
+	<insert id="insertPost" parameterType="postVo">
+		insert into post(postNum, postNm, postCont, postdate, delstatus, userid, boardnum, gn)
+   			values(#{postNum}, #{postNm}, #{postCont}, sysdate, 'N', #{userId}, #{boardNum}, gn_seq.nextval)
+	</insert>
+	
+	<insert id="insertPost2" parameterType="postVo">
+		insert into post(postnum, postnm, postcont, postdate, delstatus, userid, boardnum, postnum2, gn)
+   			values(#{postNum}, #{postNm}, #{postCont}, sysdate, 'N', #{userId}, #{boardNum}, #{postNum2}, #{gn})
+	</insert>
+	
+	<update id="deletePost" parameterType="postVo">
+		update post set delStatus=#{delStatus} where postNum=#{postNum2}
+	</update>
+	
+	<update id="updatePost" parameterType="postVo">
+		update post set postNm=#{postNm}, postCont=#{postCont}, postDate=sysdate where postNum=#{postNum2}
+	</update>
+	
+</mapper>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<!-- @Controller, @ControllerAdvice 어노테이션이 붙은 클래스만 스캔 -->
+	<context:component-scan base-package="kr.or.ddit" use-default-filters="false">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+		<context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+	</context:component-scan>
+	
+	<context:annotation-config/>
+	
+	<!-- @Controller에 있는 @RequestMapping을 처리해준다 
+		 HandlerAdapter 설정 -->
+	<mvc:annotation-driven/>
+	
+	<!-- spring이 처리하지 못하는 요청에 대해서 was(servlet-controller)에 있는 default servlet으로 처리 위임 -->
+	<mvc:default-servlet-handler/>
+
+	<!-- view resolver : beanNameViewResolver (order 0) -->
+	<!-- controller가 리턴하는 viewName과 일치하는 spring Bean이 있으면(view) 해당 veiw객체를 통해 응답을 생성하도록 한다 -->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="0"/>
+	</bean>
+
+	<!-- model객체있는 속성들을 json 문자열로 응답을 생성 -->
+	<bean name="jsonView" class="org.springframework.web.servlet.view.json.MappingJackson2JsonView"/>
+
+	<!-- fileDownloadView : 고정된 이미지를 다운로드(sally.png) -->
+	<bean name="fileDownloadView" class="kr.or.ddit.view.FileDownloadView"></bean>
+
+	<!-- view resolver : jsp - internalResourceViewResolver (order 1)
+		 해당 리소스(jsp)가 존재하지 않더라도 그대로 forward, 오타 등으로 잘못 입력시 404가 발생 -->
+
+	<!-- view resolver : jsp -internalResrouceViewResolver (order 1) -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="order" value="1"/>	
+		<property name="prefix" value="/WEB-INF/views/"/>	<!-- 접두어 -->
+		<property name="suffix" value=".jsp"/>	<!-- 접미어 -->
+		<!-- controller에서 리턴하는 viewName prefix와 suffix가 결합되서 jsp 경로를 판단 
+			 ex : controller 리턴한 viewName : index
+			  prefix + viewName + suffix
+			  /WEB-INF/views/(index).jsp => /WEB-INF/view/index.jsp
+		-->
+	</bean>
+	
+	<!-- multipartResolver -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="5242880"/>	<!-- 5MB -->
+		<property name="maxUploadSizePerFile" value="26214400"/>	<!-- 25MB -->
+		<!-- 1kb = 1024 bytes
+		1000000bytes = 1000kbytes = 1mb -->
+	</bean>
+	
+	<!-- resource bundle bean id는 messageSource로 고정 되어있다 -->
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<value>classpath:kr/or/ddit/config/msg/error</value>
+		</property>
+	</bean>
+</beans>
